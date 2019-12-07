@@ -1,6 +1,5 @@
 import pprint
 from collections import deque
-from enum import Enum
 
 from tabulate import tabulate
 
@@ -16,9 +15,9 @@ class Parser:
         self._action = action
         self._goto = goto
 
-    def parse(self, scanner, debug_flags=None):
+    def parse(self, scanner, T, NT, debug_flags=None):
         try:
-            tree = self._parse(scanner)
+            tree = self._parse(scanner, T, NT)
         finally:
             if debug_flags and (debug_flags & SHOW_STEPS) == SHOW_STEPS:
                 print(self._steps_table())
@@ -28,7 +27,7 @@ class Parser:
             print()
         return tree
 
-    def _parse(self, scanner):
+    def _parse(self, scanner, T, NT):
         scanner.reset()
 
         self._steps = []
@@ -53,8 +52,8 @@ class Parser:
 
                 self._record(stack, scanner.get_last_input(), reduce)
 
-                A = reduce.production.left
-                B = reduce.production.right
+                A = reduce.p.lhs
+                B = reduce.p.rhs
                 rhs_tokens = []
                 for i in range(2 * len(B)):
                     if i % 2 == 1:
@@ -67,12 +66,12 @@ class Parser:
 
                 rhs = []
                 for i in rhs_tokens:
-                    if isinstance(i, Enum):
+                    if i in NT:
                         rhs += [tree_stack.pop()]
-                    else:
+                    elif i in T:
                         rhs += [i]
                 rhs.reverse()
-                tree_stack.append(reduce.production.process(rhs))
+                tree_stack.append(reduce.p.process(rhs))
 
             elif isinstance(self._action.get(s, token.name), Accept) and token.name == scanner.EOF:
                 accept = self._action.get(s, token.name)
@@ -121,9 +120,7 @@ class Step:
     def __init__(self, stack, last_input, action):
         _stack = []
         for i in stack:
-            if isinstance(i, Enum):
-                _stack += [str(i.name)]
-            elif isinstance(i, Token):
+            if isinstance(i, Token):
                 _stack += [str(i.name)]
             else:
                 _stack += [str(i)]

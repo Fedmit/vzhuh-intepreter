@@ -1,14 +1,11 @@
-from enum import Enum
-
-
 class Production:
-    def __init__(self, left, right, process):
-        self.left = left
-        self.right = right
+    def __init__(self, lhs, rhs, process):
+        self.lhs = lhs
+        self.rhs = tuple(rhs.split(' '))
         self.process = process
 
     def __key(self):
-        return self.left, self.right
+        return self.lhs, self.rhs
 
     def __hash__(self):
         return hash(self.__key())
@@ -19,11 +16,4 @@ class Production:
         return NotImplemented
 
     def __str__(self):
-        lhs = self.left.name
-        rhs = []
-        for s in self.right:
-            if isinstance(s, Enum):
-                rhs += [s.name]
-            else:
-                rhs += [s]
-        return lhs + ' → ' + ' '.join(rhs)
+        return self.lhs + ' → ' + ' '.join(self.rhs)

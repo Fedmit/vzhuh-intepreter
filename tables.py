@@ -38,7 +38,7 @@ class Action(Table):
 class Goto(Table):
     def __str__(self):
         header = ['state']
-        header += [nt.name for nt in self.columns]
+        header += self.columns
         rows = []
         for state in range(self.states):
             row = [str(state)]
@@ -67,8 +67,8 @@ class Accept:
 
 
 class Reduce:
-    def __init__(self, production):
-        self.production = production
+    def __init__(self, p):
+        self.p = p
 
     def __str__(self):
-        return 'r(' + str(self.production) + ')'
+        return 'r(' + str(self.p) + ')'

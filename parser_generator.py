@@ -24,11 +24,11 @@ class ParserGenerator:
         while s_is_changing:
             s_is_changing = False
             for item in s:
-                if item.marker < len(item.production.right):
-                    B = item.production.right[item.marker]
+                if item.marker < len(item.p.rhs):
+                    B = item.p.rhs[item.marker]
                     for p in self._P:
-                        if B == p.left:
-                            sigma_a = list(item.production.right[item.marker + 1:])
+                        if B == p.lhs:
+                            sigma_a = list(item.p.rhs[item.marker + 1:])
                             sigma_a += [item.lookahead]
                             for b in self._first(sigma_a):
                                 new = Item(p, 0, b)
@@ -41,10 +41,10 @@ class ParserGenerator:
     def _goto(self, s, X):
         new = set()
         for item in s:
-            if item.marker < len(item.production.right):
-                B = item.production.right[item.marker]
+            if item.marker < len(item.p.rhs):
+                B = item.p.rhs[item.marker]
                 if B == X:
-                    new = new | {Item(item.production, item.marker + 1, item.lookahead)}
+                    new = new | {Item(item.p, item.marker + 1, item.lookahead)}
         return self._closure(new)
 
     def _fill_firsts(self):
@@ -57,7 +57,7 @@ class ParserGenerator:
         while firsts_is_changing:
             firsts_is_changing = False
             for p in self._P:
-                A, B = p.left, p.right
+                A, B = p.lhs, p.rhs
                 new_first = self._firsts[A] | (self._firsts[B[0]] - {''})
                 if new_first != self._firsts[A]:
                     self._firsts[A] = new_first
@@ -68,8 +68,8 @@ class ParserGenerator:
 
         next_goto = {}
         for item in S[0]:
-            if item.marker < len(item.production.right):
-                a = item.production.right[item.marker]
+            if item.marker < len(item.p.rhs):
+                a = item.p.rhs[item.marker]
                 next_goto[a] = [S[0]]
 
         while next_goto != {}:
@@ -80,8 +80,8 @@ class ParserGenerator:
                     if _s not in S:
                         S += [_s]
                         for item in _s:
-                            if item.marker < len(item.production.right):
-                                a = item.production.right[item.marker]
+                            if item.marker < len(item.p.rhs):
+                                a = item.p.rhs[item.marker]
                                 _next_goto.setdefault(a, [])
                                 _next_goto[a] += [_s]
             next_goto = _next_goto
@@ -106,23 +106,23 @@ class ParserGenerator:
 
         states = len(S)
 
-        _action = Action(self._T, states)
-        _goto = Goto(self._NT, states)
+        _action = Action(list(self._T), states)
+        _goto = Goto(list(self._NT), states)
 
         for state, s in enumerate(S):
             for item in s:
-                if item.marker < len(item.production.right):
-                    a = item.production.right[item.marker]
+                if item.marker < len(item.p.rhs):
+                    a = item.p.rhs[item.marker]
                     if a in self._T:
                         sk = self._goto(s, a)
                         for k, _s in enumerate(S):
                             if sk == _s:
                                 _action.set(state, a, Shift(k))
-                elif (item.marker == len(item.production.right) and
-                      item == Item(self._P[0], len(self._P[0].right), '$')):
+                elif (item.marker == len(item.p.rhs) and
+                      item == Item(self._P[0], len(self._P[0].rhs), '$')):
                     _action.set(state, '$', Accept())
-                elif item.marker == len(item.production.right):
-                    _action.set(state, item.lookahead, Reduce(item.production))
+                elif item.marker == len(item.p.rhs):
+                    _action.set(state, item.lookahead, Reduce(item.p))
 
             for nt in self._NT:
                 sk = self._goto(s, nt)

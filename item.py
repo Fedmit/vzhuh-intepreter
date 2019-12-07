@@ -1,14 +1,11 @@
-from enum import Enum
-
-
 class Item:
-    def __init__(self, production, marker, lookahead):
-        self.production = production
+    def __init__(self, p, marker, lookahead):
+        self.p = p
         self.marker = marker
         self.lookahead = lookahead
 
     def __key(self):
-        return self.production, self.marker, self.lookahead
+        return self.p, self.marker, self.lookahead
 
     def __hash__(self):
         return hash(self.__key())
@@ -19,15 +16,6 @@ class Item:
         return NotImplemented
 
     def __str__(self):
-        lhs = self.production.left.name
-        rhs = []
-        for s in self.production.right:
-            if isinstance(s, Enum):
-                rhs += [s.name]
-            else:
-                rhs += [s]
+        rhs = list(self.p.rhs)
         rhs.insert(self.marker, '•')
-        lookahead = self.lookahead
-        if isinstance(self.lookahead, Enum):
-            lookahead = self.lookahead.name
-        return '[' + lhs + ' → ' + ' '.join(rhs) + ', ' + lookahead + ']'
+        return '[' + self.p.lhs + ' → ' + ' '.join(rhs) + ', ' + self.lookahead + ']'
