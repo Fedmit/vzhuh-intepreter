@@ -1,0 +1,11 @@
+var
+    a, b, c, r: logical;
+begin
+    read(a);
+    # read(b);
+    c = true;
+
+    r = !(a | b) & c;
+
+    write(r);
+end
