@@ -12,7 +12,7 @@ class Interpreter:
             raise Exception('There\'s no program')
 
     def _declare_vars(self, tree):
-        if tree[0] == 'declaration':
+        if tree[0] == 'dec':
             for declarations in tree[1]:
                 if declarations[0].value == 'logical':
                     for var in declarations[1]:
@@ -27,7 +27,7 @@ class Interpreter:
             raise Exception('There\'s no declaration of vars')
 
     def _compute_operations(self, tree):
-        if tree[0] == 'operations':
+        if tree[0] == 'statements':
             for operation in tree[1]:
                 self._compute_operation(operation)
         else:
@@ -45,10 +45,28 @@ class Interpreter:
                 raise Exception('There\'s no such function called ' + tree[1].value
                                 + ' at line ' + str(tree[1].line) + ' position '
                                 + str(tree[1].col) + ' is not declared')
+
         elif tree[0] == 'assign':
             self._assign(tree)
+
+        elif tree[0] == 'if' or tree[0] == 'ifelse':
+            self._if_else(tree)
+
         else:
             raise Exception('There\'s no such operation called ' + tree[0])
+
+    def _if_else(self, tree):
+        val = self._compute(tree[1])
+        if val[0] != 'logical':
+            raise Exception('If operator takes only logical, not ' + val[0] + ', line ' + str(tree[1][1].line)
+                            + ' position ' + str(tree[1][1].col))
+
+        if val[1]:
+            for operation in tree[2]:
+                self._compute_operation(operation)
+        elif tree[0] == 'ifelse':
+            for operation in tree[3]:
+                self._compute_operation(operation)
 
     def _is_declared(self, var):
         if var.value not in self._vars:

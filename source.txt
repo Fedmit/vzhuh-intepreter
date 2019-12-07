@@ -1,5 +1,5 @@
 var
-    a, b, c, r: logical;
+    a, b, c: logical;
     s: string;
 begin
     write("Enter a: ");
@@ -9,8 +9,12 @@ begin
     c = true;
     s = "hello world";
 
-    r = !(a | b) & c;
+    if !(a | b) & c then
+        writeln("yeah");
+    else begin
+        write("nope");
+        write("...");
+    end
 
     writeln(s);
-    writeln(r);
 end
