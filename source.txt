@@ -2,15 +2,15 @@ var
     a, b, c, r: logical;
     s: string;
 begin
-    write("Enter a:");
-    //read(a);
-    write("Enter b:");
-    //read(b);
+    write("Enter a: ");
+    read(a);
+    write("Enter b: ");
+    read(b);
     c = true;
     s = "hello world";
 
     r = !(a | b) & c;
 
-    write(s);
-    write(r);
+    writeln(s);
+    writeln(r);
 end

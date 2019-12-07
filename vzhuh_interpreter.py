@@ -39,6 +39,8 @@ class Interpreter:
                 self._read(tree[2])
             elif tree[1].value == 'write':
                 self._write(tree[2])
+            elif tree[1].value == 'writeln':
+                self._writeln(tree[2])
             else:
                 raise Exception('There\'s no such function called ' + tree[1].value
                                 + ' at line ' + str(tree[1].line) + ' position '
@@ -81,6 +83,14 @@ class Interpreter:
                 raise Exception('There\'s no such operand called ' + var[0])
 
     def _write(self, tree):
+        if len(tree) > 1:
+            raise Exception('Function write() takes only 1 parameter, line ' + str(tree[1][1].line)
+                            + ' position ' + str(tree[1][1].col))
+        else:
+            exp = tree[0]
+            print(str(self._compute(exp)[1]), end='')
+
+    def _writeln(self, tree):
         if len(tree) > 1:
             raise Exception('Function write() takes only 1 parameter, line ' + str(tree[1][1].line)
                             + ' position ' + str(tree[1][1].col))
