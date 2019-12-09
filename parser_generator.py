@@ -1,23 +1,18 @@
+import functools
+
 from flags import *
+from tables import *
 from item import Item
-from tables import Action, Goto, Shift, Reduce, Accept
 
 
 class ParserGenerator:
-    _firsts = {}
+    _first = {}
 
     def __init__(self, P, T, NT):
         self._P = P
         self._T = T
         self._NT = NT
-        self._fill_firsts()
-
-    def _first(self, a):
-        for s in a:
-            if s == '$':
-                return {'$'}
-            if s != '':
-                return self._firsts[s]
+        self._build_first()
 
     def _closure(self, s):
         s_is_changing = True
@@ -25,19 +20,19 @@ class ParserGenerator:
             s_is_changing = False
             for item in s:
                 if item.marker < len(item.p.rhs):
-                    B = item.p.rhs[item.marker]
                     for p in self._P:
-                        if B == p.lhs:
+                        if item.p.rhs[item.marker] == p.lhs:
                             sigma_a = list(item.p.rhs[item.marker + 1:])
                             sigma_a += [item.lookahead]
-                            for b in self._first(sigma_a):
+                            for b in self._first[sigma_a[0]]:
                                 new = Item(p, 0, b)
                                 if new not in s:
                                     s_is_changing = True
                                 s = s | {new}
 
-        return s
+        return frozenset(s)
 
+    @functools.lru_cache(maxsize=128)
     def _goto(self, s, X):
         new = set()
         for item in s:
@@ -47,20 +42,21 @@ class ParserGenerator:
                     new = new | {Item(item.p, item.marker + 1, item.lookahead)}
         return self._closure(new)
 
-    def _fill_firsts(self):
+    def _build_first(self):
         for t in self._T:
-            self._firsts[t] = {t}
+            self._first[t] = {t}
         for nt in self._NT:
-            self._firsts[nt] = set()
+            self._first[nt] = set()
+        self._first['$'] = {'$'}
 
         firsts_is_changing = True
         while firsts_is_changing:
             firsts_is_changing = False
             for p in self._P:
                 A, B = p.lhs, p.rhs
-                new_first = self._firsts[A] | (self._firsts[B[0]] - {''})
-                if new_first != self._firsts[A]:
-                    self._firsts[A] = new_first
+                new_first = self._first[A] | self._first[B[0]]
+                if new_first != self._first[A]:
+                    self._first[A] = new_first
                     firsts_is_changing |= True
 
     def _build_canonical_collection(self):
@@ -91,23 +87,12 @@ class ParserGenerator:
     def build_tables(self, debug_flags=None):
         S = self._build_canonical_collection()
         if debug_flags and (debug_flags & SHOW_CANONICAL_COL) == SHOW_CANONICAL_COL:
-            for i in range(len(S)):
-                s = S[i]
-                print(str(i) + ' {', end='')
-                for j, item in enumerate(s, start=1):
-                    end = ', '
-                    if j == len(s):
-                        end = ''
-                    elif j % 4 == 0:
-                        end = ',\n   '
-                    print(item, end=end)
-                print('}')
-            print()
+            _show_canonical_collection(S)
 
         states = len(S)
 
-        _action = Action(list(self._T), states)
-        _goto = Goto(list(self._NT), states)
+        _action = Table('action', list(self._T), states)
+        _goto = Table('goto', list(self._NT), states)
 
         for state, s in enumerate(S):
             for item in s:
@@ -118,9 +103,11 @@ class ParserGenerator:
                         for k, _s in enumerate(S):
                             if sk == _s:
                                 _action.set(state, a, Shift(k))
+
                 elif (item.marker == len(item.p.rhs) and
                       item == Item(self._P[0], len(self._P[0].rhs), '$')):
                     _action.set(state, '$', Accept())
+
                 elif item.marker == len(item.p.rhs):
                     _action.set(state, item.lookahead, Reduce(item.p))
 
@@ -136,3 +123,18 @@ class ParserGenerator:
             print(_goto, end='\n\n')
 
         return _action, _goto
+
+
+def _show_canonical_collection(S):
+    for i in range(len(S)):
+        s = S[i]
+        print(str(i) + ' {', end='')
+        for j, item in enumerate(s, start=1):
+            end = ', '
+            if j == len(s):
+                end = ''
+            elif j % 4 == 0:
+                end = ',\n   '
+            print(item, end=end)
+        print('}')
+    print()

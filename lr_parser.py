@@ -29,7 +29,6 @@ class Parser:
 
     def _parse(self, scanner, T, NT):
         scanner.reset()
-
         self._steps = []
         stack = deque()
         tree_stack = deque()
@@ -52,34 +51,30 @@ class Parser:
 
                 self._record(stack, scanner.get_last_input(), reduce)
 
-                A = reduce.p.lhs
-                B = reduce.p.rhs
-                rhs_tokens = []
-                for i in range(2 * len(B)):
-                    if i % 2 == 1:
-                        rhs_tokens += [stack.pop()]
-                    else:
-                        stack.pop()
-                s = stack[-1]
-                stack.append(A)
-                stack.append(self._goto.get(s, A))
-
                 rhs = []
-                for i in rhs_tokens:
-                    if i in NT:
-                        rhs += [tree_stack.pop()]
-                    elif i in T:
-                        rhs += [i]
+                for i in range(2 * len(reduce.p.rhs)):
+                    t_nt = stack.pop()
+                    if i % 2 == 1:
+                        if t_nt in NT:
+                            rhs += [tree_stack.pop()]
+                        elif t_nt in T:
+                            rhs += [t_nt]
                 rhs.reverse()
                 tree_stack.append(reduce.p.process(rhs))
 
-            elif isinstance(self._action.get(s, token.name), Accept) and token.name == scanner.EOF:
+                s = stack[-1]
+                stack.append(reduce.p.lhs)
+                stack.append(self._goto.get(s, reduce.p.lhs))
+
+            elif isinstance(self._action.get(s, token.name), Accept) and token.name == '$':
                 accept = self._action.get(s, token.name)
                 self._record(stack, scanner.get_last_input(), accept)
 
                 return tree_stack.pop()
 
             else:
+                self._record(stack, scanner.get_last_input(), 'err')
+
                 raise Exception(
                     'Unexpected ' + str(token.value) + ' at line ' + str(token.line)
                     + ' position ' + str(token.col) + '.')
@@ -98,8 +93,6 @@ class Parser:
 
 
 class Scanner:
-    EOF = '$'
-
     _head = -1
 
     def __init__(self, tokens):

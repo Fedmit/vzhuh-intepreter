@@ -34,13 +34,13 @@ P = [
     Production('FUNC', 'ident ( ARGS )',                lambda p: ('call', p[0], p[2])),
     Production('ARGS', 'EXP , ARGS',                    lambda p: [p[0]] + p[2]),
     Production('ARGS', 'EXP',                           lambda p: [p[0]]),
-    Production('ASSIGN', 'ident = EXP',                 lambda p: ('assign', p[0], p[2])),
+    Production('ASSIGN', 'ident = EXP',                 lambda p: ('=', p[0], p[2])),
     Production('EXP', 'OR_EXP',                         lambda p: p[0]),
-    Production('OR_EXP', 'OR_EXP | AND_EXP',            lambda p: ('or', p[0], p[2])),
+    Production('OR_EXP', 'OR_EXP | AND_EXP',            lambda p: ('|', p[0], p[2])),
     Production('OR_EXP', 'AND_EXP',                     lambda p: p[0]),
-    Production('AND_EXP', 'AND_EXP & TERM',             lambda p: ('and', p[0], p[2])),
+    Production('AND_EXP', 'AND_EXP & TERM',             lambda p: ('&', p[0], p[2])),
     Production('AND_EXP', 'TERM',                       lambda p: p[0]),
-    Production('TERM', '! P_TERM',                      lambda p: ('not', p[1])),
+    Production('TERM', '! P_TERM',                      lambda p: ('!', p[1])),
     Production('TERM', 'P_TERM',                        lambda p: p[0]),
     Production('P_TERM', 'OPERAND',                     lambda p: p[0]),
     Production('P_TERM', '( EXP )',                     lambda p: p[1]),
@@ -50,15 +50,15 @@ P = [
     Production('OPERAND', 'false',                      lambda p: ('const', p[0]))
 ]
 templates = [
-    Template('var', 'var'),
-    Template('type', 'logical|string'),
-    Template('begin', 'begin'),
-    Template('end', 'end'),
-    Template('if', 'if'),
-    Template('else', 'else'),
-    Template('then', 'then'),
-    Template('true', 'true', lambda a: True),
-    Template('false', 'false', lambda a: False),
+    Template('var', 'var', after=' |\n'),
+    Template('type', 'logical|string', after=' |\n|;'),
+    Template('begin', 'begin', after=' |\n'),
+    Template('end', 'end', after=' |\n|$'),
+    Template('if', 'if', after=' |\n'),
+    Template('else', 'else', after=' |\n'),
+    Template('then', 'then', after=' |\n'),
+    Template('true', '1', lambda a: True),
+    Template('false', '0', lambda a: False),
     Template('!', '\!'),
     Template('&', '\&'),
     Template('|', '\|'),
@@ -68,7 +68,7 @@ templates = [
     Template('(', '\('),
     Template(')', '\)'),
     Template('=', '='),
-    Template('ident', '\w+'),
+    Template('ident', '[a-zA-Z]+'),
     Template('str', '".*?"', lambda a: a.strip('"')),
     Template('space', ' +', lambda a: None),
     Template('newline', '\n', lambda a: None),
@@ -90,7 +90,7 @@ def main():
 
         scanner = Scanner(tokens)
         parser = Parser(action, goto)
-        tree = parser.parse(scanner, T, NT, SHOW_TREE)
+        tree = parser.parse(scanner, T, NT, SHOW_TREE | SHOW_STEPS)
 
         interpreter = Interpreter(tree)
         interpreter.run()

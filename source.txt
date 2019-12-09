@@ -1,20 +1,14 @@
 var
     a, b, c: logical;
-    s: string;
 begin
     write("Enter a: ");
     read(a);
     write("Enter b: ");
     read(b);
-    c = true;
-    s = "hello world";
+    c = 0;
 
-    if !(a | b) & c then
+    if !(a | b) & 0 then
         writeln("yeah");
-    else begin
-        write("nope");
-        write("...");
-    end
 
-    writeln(s);
+    writeln(c);
 end

@@ -26,11 +26,14 @@ class Token(object):
 
 
 class Template(object):
-    def __init__(self, name, regexp, process=None):
+    def __init__(self, name, regexp, process=None, after=None):
         self.name = name
-        r = re.compile(regexp)
-        self.regexp = r
+        self.regexp = re.compile(regexp)
         self.process = process
+        if after:
+            self.after = re.compile(after)
+        else:
+            self.after = None
 
     def match(self, string, start, line, col):
         matched = self.regexp.match(string, start)
@@ -38,6 +41,9 @@ class Template(object):
             return False
 
         end = matched.end()
+
+        if self.after and not self.after.match(string, end):
+            return False
 
         if self.process:
             value = self.process(matched.group())

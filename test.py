@@ -1,18 +1,18 @@
+from bcolors import Color
 from lexer import Template, tokenize
 from lr_parser import *
 from mu_interpreter import Interpreter
 from parser_generator import *
 from production import Production
 
-# noinspection PyArgumentList
-NT = Enum('NT', 'GOAL EXP PRIM')
-T = ['(', 'op', 'int', ')', '$']
+NT = {'GOAL', 'EXP', 'PRIM'}
+T = {'(', 'op', 'int', ')', '$'}
 
 P = [
-    Production(NT.GOAL, (NT.EXP,),                         lambda p: p[0]),
-    Production(NT.EXP, ('(', 'op', NT.PRIM, NT.PRIM, ')'), lambda p: ('expr', p[1], p[2], p[3])),
-    Production(NT.PRIM, (NT.EXP,),                         lambda p: p[0]),
-    Production(NT.PRIM, ('int',),                          lambda p: ('int', p[0]))
+    Production('GOAL', 'EXP',             lambda p: p[0]),
+    Production('EXP', '( op PRIM PRIM )', lambda p: ('expr', p[1], p[2], p[3])),
+    Production('PRIM', 'EXP',             lambda p: p[0]),
+    Production('PRIM', 'int',             lambda p: ('int', p[0]))
 ]
 
 templates = [
@@ -33,14 +33,18 @@ def main():
 
     string = '(s 10 (s 5 2))'
 
-    tokens = tokenize(string, templates)
+    # try:
+    tokens = tokenize(string, templates, SHOW_TOKENS)
 
     scanner = Scanner(tokens)
     parser = Parser(action, goto)
-    tree = parser.parse(scanner, SHOW_TREE | SHOW_STEPS)
+    tree = parser.parse(scanner, T, NT, SHOW_TREE | SHOW_STEPS)
 
     interpreter = Interpreter(tree)
     interpreter.run()
+
+    # except Exception as e:
+    #     print(Color.ERROR + 'ERROR: ' + str(e) + Color.ENDC)
 
 
 if __name__ == '__main__':

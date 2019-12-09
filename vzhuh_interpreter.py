@@ -16,15 +16,23 @@ class Interpreter:
             for declarations in tree[1]:
                 if declarations[0].value == 'logical':
                     for var in declarations[1]:
+                        _check_var_length(var)
+                        self._check_if_already_declared(var)
                         self._vars[var.value] = ('logical', False)
                 elif declarations[0].value == 'string':
                     for var in declarations[1]:
+                        _check_var_length(var)
                         self._vars[var.value] = ('string', '')
                 else:
                     raise Exception('Language does not support type ' + declarations[0].value
                                     + ', line ' + str(declarations[0].line) + ' position ' + str(declarations[0].col))
         else:
             raise Exception('There\'s no declaration of vars')
+
+    def _check_if_already_declared(self, var):
+        if var.value in self._vars:
+            raise Exception('Variable ' + var.value + ' already declared'
+                            + ', line ' + str(var.line) + ' position ' + str(var.col))
 
     def _compute_operations(self, tree):
         if tree[0] == 'statements':
@@ -46,7 +54,7 @@ class Interpreter:
                                 + ' at line ' + str(tree[1].line) + ' position '
                                 + str(tree[1].col) + ' is not declared')
 
-        elif tree[0] == 'assign':
+        elif tree[0] == '=':
             self._assign(tree)
 
         elif tree[0] == 'if' or tree[0] == 'ifelse':
@@ -79,20 +87,20 @@ class Interpreter:
                             + ' position ' + str(tree[1][1].col))
         else:
             var = tree[0]
-            val = self._vars[var[1].value]
             if var[0] == 'const':
                 raise Exception('Can\'t read into constant, line ' + str(var[1].line)
                                 + ' position ' + str(var[1].col))
             elif var[0] == 'var':
                 self._is_declared(var[1])
                 a = input()
+                val = self._vars[var[1].value]
                 if val[0] == 'logical':
-                    if a == 'true':
+                    if a == '1':
                         self._vars[var[1].value] = (val[0], True)
-                    elif a == 'false':
+                    elif a == '0':
                         self._vars[var[1].value] = (val[0], False)
                     else:
-                        raise Exception('Input value must be true/false')
+                        raise Exception('Input value must be 1/0')
                 elif val[0] == 'string':
                     self._vars[var[1].value] = (val[0], a)
                 else:
@@ -106,7 +114,14 @@ class Interpreter:
                             + ' position ' + str(tree[1][1].col))
         else:
             exp = tree[0]
-            print(str(self._compute(exp)[1]), end='')
+            val = self._compute(exp)
+            if val[0] == 'logical':
+                if val[1]:
+                    print('1', end='')
+                else:
+                    print('0', end='')
+            else:
+                print(str(val[1]), end='')
 
     def _writeln(self, tree):
         if len(tree) > 1:
@@ -114,7 +129,14 @@ class Interpreter:
                             + ' position ' + str(tree[1][1].col))
         else:
             exp = tree[0]
-            print(str(self._compute(exp)[1]))
+            val = self._compute(exp)
+            if val[0] == 'logical':
+                if val[1]:
+                    print('1')
+                else:
+                    print('0')
+            else:
+                print(str(val[1]))
 
     def _assign(self, tree):
         self._is_declared(tree[1])
@@ -133,8 +155,8 @@ class Interpreter:
     def _compute_exp(self, tree):
         if tree[0] == 'var':
             self._is_declared(tree[1])
-            type, val = self._vars[tree[1].value]
-            return tree[1], type, val
+            t, val = self._vars[tree[1].value]
+            return tree[1], t, val
 
         elif tree[0] == 'str':
             return tree[1], 'string', tree[1].value
@@ -142,25 +164,31 @@ class Interpreter:
         elif tree[0] == 'const':
             return tree[1], 'logical', tree[1].value
 
-        elif tree[0] == 'or':
+        elif tree[0] == '|':
             operand1 = self._compute_exp(tree[1])
             operand2 = self._compute_exp(tree[2])
             _is_logical(operand1, operand2)
             return None, 'logical', operand1[2] or operand2[2]
 
-        elif tree[0] == 'and':
+        elif tree[0] == '&':
             operand1 = self._compute_exp(tree[1])
             operand2 = self._compute_exp(tree[2])
             _is_logical(operand1, operand2)
             return None, 'logical', operand1[2] and operand2[2]
 
-        elif tree[0] == 'not':
+        elif tree[0] == '!':
             operand = self._compute_exp(tree[1])
             _is_logical(operand)
             return None, 'logical', not operand[2]
 
         else:
             raise Exception('There\'s no such operation called ' + tree[0])
+
+
+def _check_var_length(var):
+        if len(var.value) > 11:
+            raise Exception('The length of a variable must be 11 or lower'
+                            ', line ' + str(var.line) + ' position ' + str(var.col))
 
 
 def _is_logical(*args):
