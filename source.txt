@@ -7,7 +7,7 @@ begin
     read(b);
     c = 0;
 
-    if !(a | b) & 0 then
+    if !a | b & c then
         writeln("yeah");
 
     writeln(c);
