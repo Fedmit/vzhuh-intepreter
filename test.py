@@ -21,7 +21,7 @@ templates = [
         Template('int', '[1-9][0-9]*', lambda a: int(a)),
         Template('space', ' +', lambda a: None),
         Template('newline', '\n', lambda a: None),
-        Template('op', 's ', lambda a: a.rstrip())
+        Template('op', 's', after=' |\n')
     ]
 
 
@@ -29,22 +29,22 @@ def main():
     print(*P, sep='\n', end='\n\n')
 
     generator = ParserGenerator(P, T, NT)
-    action, goto = generator.build_tables(SHOW_CANONICAL_COL | SHOW_ACTION_TABLE | SHOW_GOTO_TABLE)
+    action, goto = generator.build_tables(SHOW_CANONICAL_COL | SHOW_ACTION_TABLE | SHOW_GOTO_TABLE | SHOW_STATISTICS)
 
     string = '(s 10 (s 5 2))'
 
-    # try:
-    tokens = tokenize(string, templates, SHOW_TOKENS)
+    try:
+        tokens = tokenize(string, templates, SHOW_TOKENS)
 
-    scanner = Scanner(tokens)
-    parser = Parser(action, goto)
-    tree = parser.parse(scanner, T, NT, SHOW_TREE | SHOW_STEPS)
+        scanner = Scanner(tokens)
+        parser = Parser(action, goto)
+        tree = parser.parse(scanner, T, NT, SHOW_TREE | SHOW_STEPS)
 
-    interpreter = Interpreter(tree)
-    interpreter.run()
+        interpreter = Interpreter(tree)
+        interpreter.run()
 
-    # except Exception as e:
-    #     print(Color.ERROR + 'ERROR: ' + str(e) + Color.ENDC)
+    except Exception as e:
+        print(Color.ERROR + 'ERROR: ' + str(e) + Color.ENDC)
 
 
 if __name__ == '__main__':

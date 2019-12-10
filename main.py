@@ -77,10 +77,10 @@ templates = [
 
 
 def main():
-    print(*P, sep='\n', end='\n\n')
+    # print(*P, sep='\n', end='\n\n')
 
     generator = ParserGenerator(P, T, NT)
-    action, goto = generator.build_tables()
+    action, goto = generator.build_tables(SHOW_STATISTICS)
 
     with open("source.txt") as file:
         string = ''.join(file.readlines())
@@ -90,7 +90,7 @@ def main():
 
         scanner = Scanner(tokens)
         parser = Parser(action, goto)
-        tree = parser.parse(scanner, T, NT, SHOW_TREE | SHOW_STEPS)
+        tree = parser.parse(scanner, T, NT)
 
         interpreter = Interpreter(tree)
         interpreter.run()

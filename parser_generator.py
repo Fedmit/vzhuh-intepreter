@@ -1,4 +1,5 @@
 import functools
+from datetime import datetime
 
 from flags import *
 from tables import *
@@ -32,7 +33,7 @@ class ParserGenerator:
 
         return frozenset(s)
 
-    @functools.lru_cache(maxsize=128)
+    @functools.lru_cache(maxsize=4096)
     def _goto(self, s, X):
         new = set()
         for item in s:
@@ -85,6 +86,8 @@ class ParserGenerator:
         return S
 
     def build_tables(self, debug_flags=None):
+        t_start = datetime.now()
+
         S = self._build_canonical_collection()
         if debug_flags and (debug_flags & SHOW_CANONICAL_COL) == SHOW_CANONICAL_COL:
             _show_canonical_collection(S)
@@ -121,6 +124,12 @@ class ParserGenerator:
             print(_action, end='\n\n')
         if debug_flags and (debug_flags & SHOW_GOTO_TABLE) == SHOW_GOTO_TABLE:
             print(_goto, end='\n\n')
+
+        t_end = datetime.now()
+        if debug_flags and (debug_flags & SHOW_STATISTICS) == SHOW_STATISTICS:
+            print('Table generation took {:f}s'.format((t_end - t_start).microseconds / 1e6))
+            # noinspection PyUnresolvedReferences
+            print(self._goto.cache_info(), end='\n\n')
 
         return _action, _goto
 
