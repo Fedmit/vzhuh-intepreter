@@ -37,7 +37,7 @@ class Interpreter:
 
     def _check_if_already_declared(self, var):
         if var.value in self._vars:
-            raise Exception('Variable ' + var.value + ' already declared'
+            raise Exception('Variable ' + var.value + ' is already declared'
                             + ', line ' + str(var.line) + ' position ' + str(var.col))
 
     def compute_operations(self, operations):

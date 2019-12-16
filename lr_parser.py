@@ -3,6 +3,7 @@ from collections import deque
 
 from tabulate import tabulate
 
+from bcolors import Color
 from flags import *
 from lexer import Token
 from tables import Shift, Reduce, Accept
@@ -89,7 +90,7 @@ class Parser:
             s = self._steps[step]
             rows += [[str(step), s.stack, s.last_input, str(s.action)]]
 
-        return 'Steps\n' + tabulate(rows, headers=header, tablefmt='psql') + '\n'
+        return Color.UNDERLINE + 'Steps' + Color.ENDC + '\n' + tabulate(rows, headers=header, tablefmt='psql') + '\n'
 
 
 class Scanner:

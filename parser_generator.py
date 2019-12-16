@@ -1,6 +1,9 @@
 import functools
 from datetime import datetime
 
+import dill
+import os
+
 from flags import *
 from tables import *
 from item import Item
@@ -85,6 +88,21 @@ class ParserGenerator:
 
         return S
 
+    def load_or_build_tables(self):
+        if os.path.isfile('action') and os.path.isfile('goto'):
+            with open('action', 'rb') as file:
+                action = dill.load(file)
+            with open('goto', 'rb') as file:
+                goto = dill.load(file)
+            return action, goto
+        return self.build_tables()
+
+    def _dump_tables(self, action, goto):
+        with open('action', 'wb') as file:
+            dill.dump(action, file)
+        with open('goto', 'wb') as file:
+            dill.dump(goto, file)
+
     def build_tables(self, debug_flags=None):
         t_start = datetime.now()
 
@@ -127,23 +145,27 @@ class ParserGenerator:
 
         t_end = datetime.now()
         if debug_flags and (debug_flags & SHOW_STATISTICS) == SHOW_STATISTICS:
-            print('Table generation took {:f}s'.format((t_end - t_start).microseconds / 1e6))
+            print('Table generation took ' + Color.UNDERLINE +
+                  '{:f}s'.format((t_end - t_start).microseconds / 1e6) + Color.ENDC)
             # noinspection PyUnresolvedReferences
             print(self._goto.cache_info(), end='\n\n')
+
+        self._dump_tables(_action, _goto)
 
         return _action, _goto
 
 
 def _show_canonical_collection(S):
+    ident = len(str(len(S) - 1))
     for i in range(len(S)):
         s = S[i]
-        print(str(i) + ' {', end='')
+        print('{:<{}} {{'.format(i, ident), end='')
         for j, item in enumerate(s, start=1):
             end = ', '
             if j == len(s):
                 end = ''
             elif j % 4 == 0:
-                end = ',\n   '
+                end = ',\n  ' + ' ' * ident
             print(item, end=end)
-        print('}')
+        print(' }')
     print()

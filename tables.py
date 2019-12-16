@@ -1,15 +1,19 @@
 from tabulate import tabulate
 
+from bcolors import Color
+
 
 class Table:
-    _data = {}
-
-    def __init__(self, name, columns, states):
+    def __init__(self, name, columns, states, data=None):
         self.name = name
         self.states = states
         self.columns = columns
-        for c in columns:
-            self._data[c] = states * [None]
+        if data:
+            self._data = data
+        else:
+            self._data = {}
+            for c in columns:
+                self._data[c] = states * [None]
 
     def get(self, state, column):
         return self._data[column][state]
@@ -31,7 +35,8 @@ class Table:
                     row += [str(d)]
             rows += [row]
 
-        return self.name.upper() + '\n' + tabulate(rows, headers=header, tablefmt='psql')
+        return Color.UNDERLINE + self.name.upper() + Color.ENDC + '\n' + \
+               tabulate(rows, headers=header, tablefmt='psql')
 
 
 class Shift:

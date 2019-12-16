@@ -1,4 +1,7 @@
-from bcolors import Color
+import sys
+
+import dill as dill
+
 from lexer import Template, tokenize
 from lr_parser import Scanner, Parser
 from parser_generator import *
@@ -76,13 +79,13 @@ templates = [
 ]
 
 
-def main():
+def main(filename):
     # print(*P, sep='\n', end='\n\n')
 
     generator = ParserGenerator(P, T, NT)
-    action, goto = generator.build_tables(SHOW_STATISTICS)
+    action, goto = generator.load_or_build_tables()
 
-    with open("source.txt") as file:
+    with open(filename) as file:
         string = ''.join(file.readlines())
 
     try:
@@ -100,4 +103,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) < 2:
+        raise Exception('You must specify the path to the source file')
+    main(sys.argv[1])
